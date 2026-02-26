@@ -65,8 +65,7 @@
       <TreatWarningAsError>true</TreatWarningAsError>
       <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <FloatingPointModel>Fast</FloatingPointModel>
-      <LanguageStandard>stdcpp23</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)src;$(SolutionDir)external\glm;$(SolutionDir)external\json;$(IntDir)embed;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
