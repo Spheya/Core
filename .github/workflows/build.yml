@@ -1,0 +1,24 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    name: Build Project
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        config: [Debug, Release, Shipping]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Build Project
+      run: msbuild core.slnx /m /t:Clean,Build /p:Configuration=${{ matrix.config }} /p:Platform=x64 /p:RunCodeAnalysis=true /v:m

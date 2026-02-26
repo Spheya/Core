@@ -1,0 +1,9 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="Release" />
+    <BuildType Name="Shipping" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="core.vcxproj" Id="8b260f45-c902-4c9d-8ecc-149512bb194e" />
+</Solution>
