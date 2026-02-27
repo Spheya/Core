@@ -4,6 +4,8 @@
 #include <cstdlib>
 #include <thread>
 
+#include "sprite_atlas.hpp"
+
 GraphicsContext* GraphicsContext::s_instance = nullptr;
 
 static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -182,9 +184,12 @@ void GraphicsContext::draw(const Surface& surface) {
 
 	ID3D11Buffer* buffer = m_quadMesh->m_vertexBuffer.Get();
 
+	auto srv = SpriteAtlas::getInstance().getShaderResourceView();
+
 	m_context->OMSetRenderTargets(1, &rtv, nullptr);
 	m_context->RSSetViewports(1, &viewport);
 	m_context->ClearRenderTargetView(rtv, clearColor);
+	m_context->PSSetShaderResources(0, 1, &srv);
 
 	m_context->VSSetShader(m_defaultVertexShader.Get(), nullptr, 0);
 	m_context->PSSetShader(m_defaultPixelShader.Get(), nullptr, 0);
@@ -204,18 +209,19 @@ void GraphicsContext::loadResources() {
 	};
 
 	constexpr D3D11_INPUT_ELEMENT_DESC layout[] = {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 
-	m_device->CreateInputLayout(layout, 1, defaultVertexSource, sizeof(defaultVertexSource), &m_defaultInputLayout);
+	m_device->CreateInputLayout(layout, 2, defaultVertexSource, sizeof(defaultVertexSource), &m_defaultInputLayout);
 	m_device->CreateVertexShader(defaultVertexSource, sizeof(defaultVertexSource), nullptr, &m_defaultVertexShader);
 	m_device->CreatePixelShader(defaultPixelSource, sizeof(defaultPixelSource), nullptr, &m_defaultPixelShader);
 
 	constexpr Vertex quadVertices[] = {
-		{ glm::vec3(-0.5f, +0.5f, 0.0f) },
-		{ glm::vec3(+0.5f, +0.5f, 0.0f) },
-		{ glm::vec3(+0.5f, -0.5f, 0.0f) },
-		{ glm::vec3(-0.5f, -0.5f, 0.0f) },
+		{ glm::vec3(-1.0f, +1.0f, 0.0f), glm::vec2(0.0f, 0.0f) },
+		{ glm::vec3(+1.0f, +1.0f, 0.0f), glm::vec2(1.0f, 0.0f) },
+		{ glm::vec3(+1.0f, -1.0f, 0.0f), glm::vec2(1.0f, 1.0f) },
+		{ glm::vec3(-1.0f, -1.0f, 0.0f), glm::vec2(0.0f, 1.0f) },
 	};
 
 	constexpr unsigned quadIndices[] = { 0, 1, 2, 0, 2, 3 };
