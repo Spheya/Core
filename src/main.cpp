@@ -9,7 +9,9 @@ static std::atomic_bool s_closeRequested; // NOLINT
 static void applicationLoop() {
 	while(!s_closeRequested) {
 		for(const auto& surface : GraphicsContext::getInstance().getScreenSurfaces()) {
-			GraphicsContext::getInstance().draw(*surface);
+			float aspect = float(surface->getWidth()) / float(surface->getHeight());
+			Camera camera = { .view = glm::mat4(1.0f), .proj = glm::ortho(-aspect, aspect, -1.0f, 1.0f), .target = surface.get() };
+			GraphicsContext::getInstance().draw(camera);
 			surface->getSwapchain()->Present(1, 0);
 		}
 	}

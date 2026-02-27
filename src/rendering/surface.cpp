@@ -13,8 +13,8 @@ size_t Surface::count() {
 	return s_surfaces.size();
 }
 
-Surface::Surface(HWND window, ComPtr<IDXGISwapChain> swapchain, glm::uvec2 initialDimensions) :
-    m_window(window), m_swapchain(std::move(swapchain)), m_dimensions(initialDimensions) {
+Surface::Surface(HWND window, ComPtr<IDXGISwapChain> swapchain, glm::uvec2 initialDimensions, glm::ivec2 position) :
+    m_window(window), m_swapchain(std::move(swapchain)), m_dimensions(initialDimensions), m_position(position) {
 	loadRtv();
 	s_surfaces.emplace(window, this);
 }
@@ -69,8 +69,9 @@ void Surface::loadRtv() {
 	static_cast<ID3D11Texture2D*>(backBuffer)->Release();
 }
 
-ScreenSurface::ScreenSurface(HWND window, ComPtr<IDXGISwapChain> swapchain, glm::uvec2 initialDimensions) :
-    Surface(window, std::move(swapchain), initialDimensions) {
+ScreenSurface::ScreenSurface(HWND window, ComPtr<IDXGISwapChain> swapchain, glm::uvec2 initialDimensions, glm::ivec2 position) :
+    Surface(window, std::move(swapchain), initialDimensions, position)
+ {
 	auto* compDevice = GraphicsContext::getInstance().getCompositionDevice();
 	handleFatalError(compDevice->CreateTargetForHwnd(window, true, m_target.GetAddressOf()), "Could not create a DirectComposition target");
 	handleFatalError(compDevice->CreateVisual(m_visual.GetAddressOf()), "Could not create a DirectComposition visual");

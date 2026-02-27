@@ -65,7 +65,7 @@ static BOOL CALLBACK createScreenSurface(HMONITOR hMonitor, HDC /* hdcMonitor */
 	    "Could not create swapchain"
 	);
 
-	GraphicsContext::getInstance().m_screenSurfaces.emplace_back(std::make_unique<ScreenSurface>(hWnd, std::move(swapchain), glm::ivec2(w, h)));
+	GraphicsContext::getInstance().m_screenSurfaces.emplace_back(std::make_unique<ScreenSurface>(hWnd, std::move(swapchain), glm::uvec2(w, h), glm::ivec2(x, y)));
 	ShowWindow(hWnd, SW_SHOW);
 
 	return TRUE;
@@ -129,6 +129,16 @@ GraphicsContext::GraphicsContext() {
 	// Setup factory
 	handleFatalError(CreateDXGIFactory(IID_PPV_ARGS(&m_factory)), "Could not create IDXGIFactory");
 
+	// Setup buffers
+	D3D11_BUFFER_DESC cameraBufferDesc = {};
+	cameraBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	cameraBufferDesc.ByteWidth = sizeof(glm::mat4) * 2;
+	cameraBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cameraBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	cameraBufferDesc.MiscFlags = 0;
+	cameraBufferDesc.StructureByteStride = 0;
+	handleFatalError(m_device->CreateBuffer(&cameraBufferDesc, nullptr, m_cameraBuffer.GetAddressOf()), "Could not create camera buffer");
+
 	// Print Device Info
 #ifndef SHIPPING
 	ComPtr<IDXGIDevice> dxgiDevice;
@@ -168,35 +178,47 @@ GraphicsContext::GraphicsContext() {
 #endif
 }
 
-void GraphicsContext::draw(const Surface& surface) {
+void GraphicsContext::prepareCameraMatrices(const Camera& camera) {
+	D3D11_MAPPED_SUBRESOURCE cameraBufferResource;
+	handleFatalError(m_context->Map(m_cameraBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &cameraBufferResource), "Could not map camera buffer to CPU memory");
+	memcpy(cameraBufferResource.pData, &camera, sizeof(glm::mat4) * 2);
+	m_context->Unmap(m_cameraBuffer.Get(), 0);
+}
+
+void GraphicsContext::draw(const Camera& camera) {
+	assert(camera.target);
+
+
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
 
-	auto* rtv = surface.getRenderTargetView();
+	auto* rtv = camera.target->getRenderTargetView();
 
 	D3D11_VIEWPORT viewport = {};
-	viewport.Width = float(surface.getWidth());
-	viewport.Height = float(surface.getHeight());
+	viewport.Width = float(camera.target->getWidth());
+	viewport.Height = float(camera.target->getHeight());
 	viewport.MinDepth = 0.0f;
 	viewport.MaxDepth = 1.0f;
 
 	float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
-	ID3D11Buffer* buffer = m_quadMesh->m_vertexBuffer.Get();
-
 	auto* srv = SpriteAtlas::getInstance().getShaderResourceView();
+	prepareCameraMatrices(camera);
 
 	m_context->OMSetRenderTargets(1, &rtv, nullptr);
 	m_context->RSSetViewports(1, &viewport);
 	m_context->ClearRenderTargetView(rtv, clearColor);
-	m_context->PSSetShaderResources(0, 1, &srv);
 
 	m_context->VSSetShader(m_defaultVertexShader.Get(), nullptr, 0);
 	m_context->PSSetShader(m_defaultPixelShader.Get(), nullptr, 0);
+	m_context->PSSetShaderResources(0, 1, &srv);
+	m_context->VSSetConstantBuffers(0, 1, m_cameraBuffer.GetAddressOf());
+
 	m_context->IASetInputLayout(m_defaultInputLayout.Get());
-	m_context->IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
+	m_context->IASetVertexBuffers(0, 1, m_quadMesh->m_vertexBuffer.GetAddressOf(), &stride, &offset);
 	m_context->IASetIndexBuffer(m_quadMesh->m_indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 	m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
 	m_context->DrawIndexed(m_quadMesh->getIndexCount(), 0, 0);
 }
 
@@ -210,7 +232,13 @@ void GraphicsContext::loadResources() {
 
 	constexpr D3D11_INPUT_ELEMENT_DESC layout[] = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+
+		//{ "WORLD",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0,  D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+		//{ "WORLD",    1, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 16, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+		//{ "WORLD",    2, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 32, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+		//{ "WORLD",    3, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 48, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+		//{ "ST",       0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 64, D3D11_INPUT_PER_INSTANCE_DATA, 1 }
 	};
 
 	m_device->CreateInputLayout(layout, 2, defaultVertexSource, sizeof(defaultVertexSource), &m_defaultInputLayout);
@@ -218,10 +246,10 @@ void GraphicsContext::loadResources() {
 	m_device->CreatePixelShader(defaultPixelSource, sizeof(defaultPixelSource), nullptr, &m_defaultPixelShader);
 
 	constexpr Vertex quadVertices[] = {
-		{ .position = glm::vec3(-1.0f, +1.0f, 0.0f), .uv = glm::vec2(0.0f, 0.0f) },
-		{ .position = glm::vec3(+1.0f, +1.0f, 0.0f), .uv = glm::vec2(1.0f, 0.0f) },
-		{ .position = glm::vec3(+1.0f, -1.0f, 0.0f), .uv = glm::vec2(1.0f, 1.0f) },
-		{ .position = glm::vec3(-1.0f, -1.0f, 0.0f), .uv = glm::vec2(0.0f, 1.0f) },
+		{ .position = glm::vec3(-0.5f, +0.5f, 0.0f), .uv = glm::vec2(0.0f, 0.0f) },
+		{ .position = glm::vec3(+0.5f, +0.5f, 0.0f), .uv = glm::vec2(1.0f, 0.0f) },
+		{ .position = glm::vec3(+0.5f, -0.5f, 0.0f), .uv = glm::vec2(1.0f, 1.0f) },
+		{ .position = glm::vec3(-0.5f, -0.5f, 0.0f), .uv = glm::vec2(0.0f, 1.0f) },
 	};
 
 	constexpr unsigned quadIndices[] = { 0, 1, 2, 0, 2, 3 };

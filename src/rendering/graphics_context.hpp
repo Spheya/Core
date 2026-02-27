@@ -4,6 +4,7 @@
 
 #include "mesh.hpp"
 #include "surface.hpp"
+#include "camera.hpp"
 
 class GraphicsContext {
 	friend BOOL CALLBACK createScreenSurface(HMONITOR, HDC, LPRECT, LPARAM);
@@ -24,7 +25,8 @@ public:
 
 	[[nodiscard]] std::span<const std::unique_ptr<ScreenSurface>> getScreenSurfaces() const { return m_screenSurfaces; }
 
-	void draw(const Surface& surface);
+	void prepareCameraMatrices(const Camera& camera);
+	void draw(const Camera& camera);
 
 private:
 	void loadResources();
@@ -37,6 +39,8 @@ private:
 	ComPtr<ID3D11DeviceContext> m_context;
 	ComPtr<IDCompositionDevice> m_compDevice;
 	ComPtr<IDXGIFactory4> m_factory;
+
+	ComPtr<ID3D11Buffer> m_cameraBuffer;
 
 	ComPtr<ID3D11InputLayout> m_defaultInputLayout;
 	ComPtr<ID3D11VertexShader> m_defaultVertexShader;

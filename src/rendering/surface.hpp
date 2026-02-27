@@ -11,7 +11,7 @@ public:
 	[[nodiscard]] static size_t count();
 
 public:
-	Surface(HWND window, ComPtr<IDXGISwapChain> swapchain, glm::uvec2 initialDimensions);
+	Surface(HWND window, ComPtr<IDXGISwapChain> swapchain, glm::uvec2 initialDimensions, glm::ivec2 position);
 	Surface(const Surface&) = delete;
 	Surface& operator=(const Surface&) = delete;
 	Surface(Surface&& other) noexcept;
@@ -24,6 +24,7 @@ public:
 	[[nodiscard]] IDXGISwapChain* getSwapchain() const { return m_swapchain.Get(); }
 	[[nodiscard]] ID3D11RenderTargetView* getRenderTargetView() const { return m_rtv.Get(); }
 
+	[[nodiscard]] glm::ivec2 getPosition() const { return m_position; }
 	[[nodiscard]] glm::uvec2 getDimensions() const { return m_dimensions; }
 	[[nodiscard]] unsigned getWidth() const { return m_dimensions.x; }
 	[[nodiscard]] unsigned getHeight() const { return m_dimensions.y; }
@@ -40,11 +41,12 @@ private:
 	ComPtr<IDXGISwapChain> m_swapchain;
 	ComPtr<ID3D11RenderTargetView> m_rtv;
 	glm::uvec2 m_dimensions;
+	glm::ivec2 m_position;
 };
 
 class ScreenSurface : public Surface {
 public:
-	ScreenSurface(HWND window, ComPtr<IDXGISwapChain> swapchain, glm::uvec2 initialDimensions);
+	ScreenSurface(HWND window, ComPtr<IDXGISwapChain> swapchain, glm::uvec2 initialDimensions, glm::ivec2 position);
 
 	[[nodiscard]] IDCompositionTarget* getTarget() const { return m_target.Get(); }
 	[[nodiscard]] IDCompositionVisual* getVisual() const { return m_visual.Get(); }

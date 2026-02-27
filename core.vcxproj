@@ -130,6 +130,7 @@
     <ClCompile Include="src\rendering\surface.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\rendering\camera.hpp" />
     <ClInclude Include="src\rendering\drawable.hpp" />
     <ClInclude Include="src\rendering\mesh.hpp" />
     <ClInclude Include="src\rendering\sprite_atlas.hpp" />
