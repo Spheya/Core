@@ -20,7 +20,7 @@ Surface::Surface(HWND window, ComPtr<IDXGISwapChain> swapchain, glm::uvec2 initi
 }
 
 Surface::Surface(Surface&& other) noexcept :
-    m_window(other.m_window), m_swapchain(std::move(other.m_swapchain)), m_rtv(std::move(other.m_rtv)), m_dimensions(other.m_dimensions) {
+    m_window(other.m_window), m_swapchain(std::move(other.m_swapchain)), m_rtv(std::move(other.m_rtv)), m_dimensions(other.m_dimensions), m_position(other.m_position) {
 	s_surfaces.at(other.m_window) = this;
 	other.m_window = nullptr;
 	other.m_swapchain = nullptr;
@@ -33,6 +33,7 @@ Surface& Surface::operator=(Surface&& other) noexcept {
 	m_swapchain = std::move(other.m_swapchain);
 	m_rtv = std::move(other.m_rtv);
 	m_dimensions = other.m_dimensions;
+	m_position = other.m_position;
 	s_surfaces.at(other.m_window) = this;
 	other.m_window = nullptr;
 	return *this;

@@ -1,6 +1,7 @@
 #include "sprite_atlas.hpp"
 
 #include <memory>
+#include <utility>
 
 #include <nlohmann/json.hpp>
 
@@ -17,15 +18,13 @@ void SpriteAtlas::load() {
 	assert(!s_instance);
 	s_instance = std::make_unique<SpriteAtlas>();
 
-	// NOLINTBEGIN
 	constexpr char jsonFile[] = {
 #embed "embed/atlas.json"
 	};
 
-	constexpr unsigned char pngFile[] = {
+	constexpr char pngFile[] = {
 #embed "embed/atlas.png"
 	};
-	// NOLINTEND
 
 	// Load json data
 	json data = json::parse(jsonFile);
@@ -42,9 +41,9 @@ void SpriteAtlas::load() {
 	int w;
 	int h;
 	int components;
-	unsigned char* imageData = stbi_load_from_memory(pngFile, sizeof(pngFile), &w, &h, &components, 4);
-	assert(unsigned(w) == atlasSize.x);
-	assert(unsigned(h) == atlasSize.y);
+	unsigned char* imageData = stbi_load_from_memory((const unsigned char*)pngFile, sizeof(pngFile), &w, &h, &components, 4); // NOLINT
+	assert(std::cmp_equal(w, atlasSize.x));
+	assert(std::cmp_equal(h, atlasSize.y));
 
 	// Create DX11 texture
 	D3D11_TEXTURE2D_DESC textureDesc = {};
