@@ -54,7 +54,7 @@ static BOOL CALLBACK createScreenSurface(HMONITOR hMonitor, HDC /* hdcMonitor */
 	swapchainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	swapchainDesc.BufferCount = 2;
 	// swapchainDesc.Scaling = DXGI_SCALING_NONE;
-	swapchainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+	swapchainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	swapchainDesc.AlphaMode = DXGI_ALPHA_MODE_PREMULTIPLIED;
 
 	ComPtr<IDXGISwapChain1> swapchain;
