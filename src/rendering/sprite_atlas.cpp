@@ -17,13 +17,15 @@ void SpriteAtlas::load() {
 	assert(!s_instance);
 	s_instance = std::make_unique<SpriteAtlas>();
 
+	// NOLINTBEGIN
 	constexpr char jsonFile[] = {
 #embed "embed/atlas.json"
 	};
 
 	constexpr unsigned char pngFile[] = {
-#embed "embed/atlas.png" // NOLINT
+#embed "embed/atlas.png"
 	};
+	// NOLINTEND
 
 	// Load json data
 	json data = json::parse(jsonFile);
