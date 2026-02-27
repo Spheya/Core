@@ -14,5 +14,5 @@ float4 main(Varyings varyings) : SV_TARGET
 {
     float4 col = tex.Sample(point_sampler, varyings.uv);
     col.rgb *= col.a;
-    return col * 0.4;
+    return col;
 }
