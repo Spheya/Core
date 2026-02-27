@@ -22,7 +22,7 @@ void SpriteAtlas::load() {
 	};
 
 	constexpr unsigned char pngFile[] = {
-#embed "embed/atlas.png"
+#embed "embed/atlas.png" // NOLINT
 	};
 
 	// Load json data

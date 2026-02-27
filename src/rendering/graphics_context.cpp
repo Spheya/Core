@@ -184,7 +184,7 @@ void GraphicsContext::draw(const Surface& surface) {
 
 	ID3D11Buffer* buffer = m_quadMesh->m_vertexBuffer.Get();
 
-	auto srv = SpriteAtlas::getInstance().getShaderResourceView();
+	auto* srv = SpriteAtlas::getInstance().getShaderResourceView();
 
 	m_context->OMSetRenderTargets(1, &rtv, nullptr);
 	m_context->RSSetViewports(1, &viewport);
@@ -218,10 +218,10 @@ void GraphicsContext::loadResources() {
 	m_device->CreatePixelShader(defaultPixelSource, sizeof(defaultPixelSource), nullptr, &m_defaultPixelShader);
 
 	constexpr Vertex quadVertices[] = {
-		{ glm::vec3(-1.0f, +1.0f, 0.0f), glm::vec2(0.0f, 0.0f) },
-		{ glm::vec3(+1.0f, +1.0f, 0.0f), glm::vec2(1.0f, 0.0f) },
-		{ glm::vec3(+1.0f, -1.0f, 0.0f), glm::vec2(1.0f, 1.0f) },
-		{ glm::vec3(-1.0f, -1.0f, 0.0f), glm::vec2(0.0f, 1.0f) },
+		{ .position = glm::vec3(-1.0f, +1.0f, 0.0f), .uv = glm::vec2(0.0f, 0.0f) },
+		{ .position = glm::vec3(+1.0f, +1.0f, 0.0f), .uv = glm::vec2(1.0f, 0.0f) },
+		{ .position = glm::vec3(+1.0f, -1.0f, 0.0f), .uv = glm::vec2(1.0f, 1.0f) },
+		{ .position = glm::vec3(-1.0f, -1.0f, 0.0f), .uv = glm::vec2(0.0f, 1.0f) },
 	};
 
 	constexpr unsigned quadIndices[] = { 0, 1, 2, 0, 2, 3 };
