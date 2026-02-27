@@ -4,32 +4,29 @@
 #include "rendering/graphics_context.hpp"
 #include "rendering/sprite_atlas.hpp"
 
-// Todo: move to graphics context
-static bool pollEvents() {
-	MSG msg = {};
-	while(PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
-		if(msg.message == WM_QUIT) return false;
+static std::atomic_bool s_closeRequested; // NOLINT
 
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
+static void applicationLoop() {
+	while(!s_closeRequested) {
+		GraphicsContext::getInstance().draw(GraphicsContext::getInstance().getMainSurface());
+		GraphicsContext::getInstance().getMainSurface().getSwapchain()->Present(1, 0);
 	}
-	return true;
 }
 
 static int runApp(HINSTANCE hInstance) {
-	GraphicsContext::initialize(hInstance, L"virus");
+	GraphicsContext::initialize(hInstance, L"core.exe");
 	SpriteAtlas::load();
 
-	[[maybe_unused]] Sprite jacco = SpriteAtlas::getInstance().get("jaccocube.png");
+	std::thread app(applicationLoop);
 
-	size_t i = 0;
-	while(pollEvents()) {
-		logger::log("frame {}", i);
-		++i;
-		// Frame
-		GraphicsContext::getInstance().draw(GraphicsContext::getInstance().getMainSurface());
-		GraphicsContext::getInstance().getMainSurface().getSwapchain()->Present(0, 0);
+	MSG msg = {};
+	while(GetMessage(&msg, nullptr, 0, 0)) {
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
 	}
+
+	s_closeRequested = true;
+	app.join();
 
 	SpriteAtlas::destroy();
 	GraphicsContext::close();

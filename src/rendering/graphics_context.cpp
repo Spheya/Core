@@ -1,14 +1,13 @@
 #include "graphics_context.hpp"
 
+#include <chrono>
 #include <cstdlib>
+#include <thread>
 
 GraphicsContext* GraphicsContext::s_instance = nullptr;
 
 static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	switch(msg) {
-	case WM_SIZE:
-		if(wParam != SIZE_MINIMIZED) Surface::get(hWnd)->updateDimensions(glm::uvec2(LOWORD(lParam), HIWORD(lParam)));
-		break;
 	case WM_CLOSE: DestroyWindow(hWnd); break;
 	case WM_DESTROY: PostQuitMessage(0); break;
 	default: return DefWindowProc(hWnd, msg, wParam, lParam);
