@@ -1,10 +1,17 @@
 #include "surface.hpp"
-
-#include <unordered_map>
-
 #include "graphics_context.hpp"
 
-static std::unordered_map<HWND, Surface*> s_surfaces; // NOLINT
+std::unordered_map<HWND, Surface*> Surface::s_surfaces;
+
+Surface* Surface::get(HWND window) {
+	auto it = s_surfaces.find(window);
+	if(it == s_surfaces.end()) return nullptr;
+	return it->second;
+}
+
+size_t Surface::count() {
+	return s_surfaces.size();
+}
 
 Surface::Surface(HWND window, ComPtr<IDXGISwapChain> swapchain, glm::ivec2 initialDimensions) :
     m_window(window), m_swapchain(std::move(swapchain)), m_dimensions(initialDimensions) {
@@ -35,19 +42,7 @@ Surface::~Surface() {
 	destroy();
 }
 
-Surface* Surface::get(HWND window) {
-	auto it = s_surfaces.find(window);
-	if(it == s_surfaces.end()) return nullptr;
-	return it->second;
-}
-
-size_t Surface::count() {
-	return s_surfaces.size();
-}
-
-void Surface::updateDimensions(glm::uvec2 dimensions) {
-	m_dimensions = glm::max(dimensions, m_dimensions);
-
+void Surface::resizeSwapchain(glm::uvec2 dimensions) {
 	auto* context = GraphicsContext::getInstance().getDeviceContext();
 	context->OMSetRenderTargets(0, nullptr, nullptr);
 	m_rtv.Reset();

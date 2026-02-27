@@ -6,13 +6,13 @@
 #include "surface.hpp"
 
 class GraphicsContext {
-private:
-	GraphicsContext();
-
 public:
 	static void initialize(HINSTANCE hInstance, const wchar_t* applicationName);
 	static void close();
 	static GraphicsContext& getInstance();
+
+private:
+	GraphicsContext();
 
 public:
 	[[nodiscard]] ID3D11Device* getDevice() const { return m_device.Get(); }

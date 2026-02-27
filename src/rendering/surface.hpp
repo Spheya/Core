@@ -1,9 +1,15 @@
 #pragma once
 
+#include <unordered_map>
+
 #include "math.hpp"
 #include "platform.hpp"
 
 class Surface {
+public:
+	[[nodiscard]] static Surface* get(HWND window);
+	[[nodiscard]] static size_t count();
+
 public:
 	Surface(HWND window, ComPtr<IDXGISwapChain> swapchain, glm::ivec2 initialDimensions);
 	Surface(const Surface&) = delete;
@@ -11,6 +17,8 @@ public:
 	Surface(Surface&& other) noexcept;
 	Surface& operator=(Surface&& other) noexcept;
 	virtual ~Surface();
+
+	void resizeSwapchain(glm::uvec2 dimensions);
 
 	[[nodiscard]] HWND getWindow() const { return m_window; }
 	[[nodiscard]] IDXGISwapChain* getSwapchain() const { return m_swapchain.Get(); }
@@ -20,16 +28,12 @@ public:
 	[[nodiscard]] unsigned getWidth() const { return m_dimensions.x; }
 	[[nodiscard]] unsigned getHeight() const { return m_dimensions.y; }
 
-	[[nodiscard]] static Surface* get(HWND window);
-	[[nodiscard]] static size_t count();
-
-public:
-	// Todo: Private functions and voeg WndProc toe aan vriendenboekje
-	void updateDimensions(glm::uvec2 dimensions);
-
 private:
 	void destroy();
 	void loadRtv();
+
+private:
+	static std::unordered_map<HWND, Surface*> s_surfaces;
 
 private:
 	HWND m_window;
