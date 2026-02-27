@@ -8,13 +8,17 @@ static std::atomic_bool s_closeRequested; // NOLINT
 
 static void applicationLoop() {
 	while(!s_closeRequested) {
-		GraphicsContext::getInstance().draw(GraphicsContext::getInstance().getMainSurface());
-		GraphicsContext::getInstance().getMainSurface().getSwapchain()->Present(1, 0);
+		for(const auto& surface : GraphicsContext::getInstance().getScreenSurfaces()) {
+			float aspect = float(surface->getWidth()) / float(surface->getHeight());
+			Camera camera = { .view = glm::mat4(1.0f), .proj = glm::ortho(-aspect, aspect, 1.0f, -1.0f), .target = surface.get() };
+			GraphicsContext::getInstance().draw(camera);
+			surface->getSwapchain()->Present(1, 0);
+		}
 	}
 }
 
 static int runApp(HINSTANCE hInstance) {
-	GraphicsContext::initialize(hInstance, L"core.exe");
+	GraphicsContext::initialize(hInstance);
 	SpriteAtlas::load();
 
 	std::thread app(applicationLoop);
