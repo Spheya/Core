@@ -73,3 +73,12 @@ void Surface::loadRtv() {
 	);
 	static_cast<ID3D11Texture2D*>(backBuffer)->Release();
 }
+
+ScreenSurface::ScreenSurface(HWND window, ComPtr<IDXGISwapChain> swapchain, glm::ivec2 initialDimensions) :
+    Surface(window, std::move(swapchain), std::move(initialDimensions)) {
+	auto* compDevice = GraphicsContext::getInstance().getCompositionDevice();
+	handleFatalError(compDevice->CreateTargetForHwnd(window, true, m_target.GetAddressOf()), "Could not create a DirectComposition target");
+	handleFatalError(compDevice->CreateVisual(m_visual.GetAddressOf()), "Could not create a DirectComposition visual");
+	handleFatalError(m_visual->SetContent(getSwapchain()), "Could not assign swapchain to DirectComposition visual");
+	handleFatalError(m_target->SetRoot(m_visual.Get()), "Could not assign DirectComposition visual to target");
+}

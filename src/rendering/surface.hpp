@@ -5,7 +5,7 @@
 
 class Surface {
 public:
-	Surface(HWND window, ComPtr<IDXGISwapChain> swapchain, glm::ivec2 initialiDimensions);
+	Surface(HWND window, ComPtr<IDXGISwapChain> swapchain, glm::ivec2 initialDimensions);
 	Surface(const Surface&) = delete;
 	Surface& operator=(const Surface&) = delete;
 	Surface(Surface&& other) noexcept;
@@ -36,4 +36,16 @@ private:
 	ComPtr<IDXGISwapChain> m_swapchain;
 	ComPtr<ID3D11RenderTargetView> m_rtv;
 	glm::uvec2 m_dimensions;
+};
+
+class ScreenSurface : public Surface {
+public:
+	ScreenSurface(HWND window, ComPtr<IDXGISwapChain> swapchain, glm::ivec2 initialDimensions);
+
+	[[nodiscard]] IDCompositionTarget* getTarget() const { return m_target.Get(); }
+	[[nodiscard]] IDCompositionVisual* getVisual() const { return m_visual.Get(); }
+
+private:
+	ComPtr<IDCompositionTarget> m_target;
+	ComPtr<IDCompositionVisual> m_visual;
 };

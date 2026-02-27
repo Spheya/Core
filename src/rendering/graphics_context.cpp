@@ -17,26 +17,58 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 
 static void initializeWindowClasses(HINSTANCE hInstance) {
 	WNDCLASS windowClass = {};
+	windowClass.style = CS_HREDRAW | CS_VREDRAW;
 	windowClass.lpfnWndProc = WndProc;
 	windowClass.hInstance = hInstance;
 	windowClass.lpszClassName = L"Window";
 	windowClass.hCursor = LoadCursor(nullptr, IDC_ARROW);
-	windowClass.hbrBackground = nullptr;
 	RegisterClass(&windowClass);
 }
 
 void GraphicsContext::initialize(HINSTANCE hInstance, const wchar_t* applicationName) {
 	assert(!s_instance);
+	s_instance = new GraphicsContext();
+
 	initializeWindowClasses(hInstance);
 
 	HWND mainWindow = CreateWindowEx(
-	    0, L"Window", applicationName, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 960, 640, nullptr, nullptr, hInstance, nullptr
+	    WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_NOREDIRECTIONBITMAP | WS_EX_TOPMOST,
+	    L"Window",
+	    applicationName,
+	    WS_POPUP,
+	    CW_USEDEFAULT,
+	    CW_USEDEFAULT,
+	    960,
+	    640,
+	    nullptr,
+	    nullptr,
+	    hInstance,
+	    nullptr
 	);
 
-	ComPtr<IDXGISwapChain> swapchain;
-	s_instance = new GraphicsContext(mainWindow, swapchain);
-	s_instance->m_mainSurface = std::make_unique<Surface>(mainWindow, std::move(swapchain), glm::ivec2(960, 640));
+	DXGI_SWAP_CHAIN_DESC1 swapchainDesc = {};
+	swapchainDesc.BufferCount = 2;
+	swapchainDesc.Width = 960;
+	swapchainDesc.Height = 640;
+	swapchainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	swapchainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	swapchainDesc.SampleDesc.Count = 1;
+	swapchainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+	swapchainDesc.AlphaMode = DXGI_ALPHA_MODE_PREMULTIPLIED;
+
+	ComPtr<IDXGIFactory4> factory;
+	handleFatalError(CreateDXGIFactory(IID_PPV_ARGS(&factory)), "Could not create IDXGIFactory1");
+
+	ComPtr<IDXGISwapChain1> swapchain;
+	handleFatalError(
+	    factory->CreateSwapChainForComposition(s_instance->m_device.Get(), &swapchainDesc, nullptr, swapchain.GetAddressOf()),
+	    "Could not create swapchain"
+	);
+
+	s_instance->m_mainSurface = std::make_unique<ScreenSurface>(mainWindow, std::move(swapchain), glm::ivec2(960, 640));
 	s_instance->loadResources();
+
+	s_instance->getCompositionDevice()->Commit();
 
 	ShowWindow(mainWindow, SW_SHOW);
 }
@@ -52,30 +84,19 @@ GraphicsContext& GraphicsContext::getInstance() {
 	return *s_instance;
 }
 
-GraphicsContext::GraphicsContext(HWND mainWindow, ComPtr<IDXGISwapChain>& swapchain) {
-	DXGI_SWAP_CHAIN_DESC swapchainDesc = {};
-	swapchainDesc.BufferCount = 2;
-	swapchainDesc.BufferDesc.Width = 960;
-	swapchainDesc.BufferDesc.Height = 640;
-	swapchainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	swapchainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	swapchainDesc.OutputWindow = mainWindow;
-	swapchainDesc.SampleDesc.Count = 1;
-	swapchainDesc.Windowed = TRUE;
-	swapchainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-
+GraphicsContext::GraphicsContext() {
+	// Setup DX11
 	[[maybe_unused]] D3D_FEATURE_LEVEL featureLevel;
+
 	handleFatalError(
-	    D3D11CreateDeviceAndSwapChain(
+	    D3D11CreateDevice(
 	        nullptr,
 	        D3D_DRIVER_TYPE_HARDWARE,
 	        nullptr,
-	        0,
+	        D3D11_CREATE_DEVICE_BGRA_SUPPORT,
 	        nullptr,
 	        0,
 	        D3D11_SDK_VERSION,
-	        &swapchainDesc,
-	        &swapchain,
 	        &m_device,
 	        &featureLevel,
 	        &m_context
@@ -83,11 +104,14 @@ GraphicsContext::GraphicsContext(HWND mainWindow, ComPtr<IDXGISwapChain>& swapch
 	    "Could not setup DX11 device"
 	);
 
-	ComPtr<IDXGIDevice1> dxgiDevice;
-	m_device.As(&dxgiDevice);
-	dxgiDevice->SetMaximumFrameLatency(1);
+	// Setup DirectComposition
+	handleFatalError(DCompositionCreateDevice(nullptr, IID_PPV_ARGS(m_compDevice.GetAddressOf())), "Could not create a DirectComposition context");
 
+	// Print Device Info
 #ifndef SHIPPING
+	ComPtr<IDXGIDevice> dxgiDevice;
+	m_device.As(&dxgiDevice);
+
 	ComPtr<IDXGIAdapter> adapter;
 	DXGI_ADAPTER_DESC desc;
 	dxgiDevice->GetAdapter(&adapter);
@@ -134,7 +158,7 @@ void GraphicsContext::draw(const Surface& surface) {
 	viewport.MinDepth = 0.0f;
 	viewport.MaxDepth = 1.0f;
 
-	float clearColor[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
+	float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 	ID3D11Buffer* buffer = m_quadMesh->m_vertexBuffer.Get();
 
