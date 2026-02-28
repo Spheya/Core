@@ -1,17 +1,45 @@
 #include <thread>
 
 #include "platform.hpp"
+#include "rendering/animation.hpp"
 #include "rendering/graphics_context.hpp"
 #include "rendering/sprite_atlas.hpp"
+#include "time.hpp"
 
 static std::atomic_bool s_closeRequested; // NOLINT
 
 static void applicationLoop() {
+	SpriteDrawable drawables[] = {
+		{ .sprite = SpriteAtlas::getInstance().get("miku.png"), .matrix = glm::mat4(1.0f) },
+		{ .sprite = SpriteAtlas::getInstance().get("player_idle_1.png"), .matrix = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f)) }
+	};
+
+	Sprite runAnimSprites[] = {
+		SpriteAtlas::getInstance().get("player_run_1.png"), SpriteAtlas::getInstance().get("player_run_2.png"),
+		SpriteAtlas::getInstance().get("player_run_3.png"), SpriteAtlas::getInstance().get("player_run_4.png"),
+		SpriteAtlas::getInstance().get("player_run_5.png"), SpriteAtlas::getInstance().get("player_run_6.png"),
+	};
+
+	Animation anim1(runAnimSprites, 24, 2, 0);
+	Animation anim2(runAnimSprites, 24, 2, 1);
+
+	Time time;
+
 	while(!s_closeRequested) {
+		time.update();
+
+		anim1.update(time);
+		anim2.update(time);
+		drawables[0].sprite = anim1.getCurrentFrame();
+		drawables[1].sprite = anim2.getCurrentFrame();
+
+		glm::mat4 viewMat(1.0f);
+
 		for(const auto& surface : GraphicsContext::getInstance().getScreenSurfaces()) {
 			float aspect = float(surface->getWidth()) / float(surface->getHeight());
-			Camera camera = { .view = glm::mat4(1.0f), .proj = glm::ortho(-aspect, aspect, 1.0f, -1.0f), .target = surface.get() };
-			GraphicsContext::getInstance().draw(camera);
+			Camera camera = { .view = viewMat, .proj = glm::ortho(-aspect, aspect, 1.0f, -1.0f), .target = surface.get() };
+			viewMat = glm::rotate(viewMat, 1.0f, glm::vec3(0.0f, 0.0f, 1.0f));
+			GraphicsContext::getInstance().drawSprites(camera, drawables);
 		}
 
 		bool first = true;

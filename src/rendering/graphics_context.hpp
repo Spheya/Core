@@ -1,9 +1,11 @@
 #pragma once
 
 #include <memory>
+#include <span>
 
 #include "camera.hpp"
 #include "mesh.hpp"
+#include "sprite_drawable.hpp"
 #include "surface.hpp"
 
 class GraphicsContext {
@@ -26,7 +28,7 @@ public:
 	[[nodiscard]] std::span<const std::unique_ptr<ScreenSurface>> getScreenSurfaces() const { return m_screenSurfaces; }
 
 	void prepareCameraMatrices(const Camera& camera);
-	void draw(const Camera& camera);
+	void drawSprites(const Camera& camera, std::span<const SpriteDrawable> drawables);
 
 private:
 	void loadResources();
@@ -41,10 +43,13 @@ private:
 	ComPtr<IDXGIFactory4> m_factory;
 
 	ComPtr<ID3D11Buffer> m_cameraBuffer;
+	ComPtr<ID3D11Buffer> m_instanceBuffer;
 
 	ComPtr<ID3D11InputLayout> m_defaultInputLayout;
 	ComPtr<ID3D11VertexShader> m_defaultVertexShader;
 	ComPtr<ID3D11PixelShader> m_defaultPixelShader;
+
+	ComPtr<ID3D11SamplerState> m_pointSampler;
 
 	std::unique_ptr<Mesh> m_quadMesh;
 	std::vector<std::unique_ptr<ScreenSurface>> m_screenSurfaces;

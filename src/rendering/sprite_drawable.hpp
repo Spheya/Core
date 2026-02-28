@@ -3,7 +3,7 @@
 #include "../math.hpp"
 #include "sprite.hpp"
 
-struct Drawable {
+struct SpriteDrawable {
 	Sprite sprite;
 	glm::mat4 matrix;
 };

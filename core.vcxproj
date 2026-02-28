@@ -130,8 +130,9 @@
     <ClCompile Include="src\rendering\surface.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\rendering\animation.hpp" />
     <ClInclude Include="src\rendering\camera.hpp" />
-    <ClInclude Include="src\rendering\drawable.hpp" />
+    <ClInclude Include="src\rendering\sprite_drawable.hpp" />
     <ClInclude Include="src\rendering\mesh.hpp" />
     <ClInclude Include="src\rendering\sprite_atlas.hpp" />
     <ClInclude Include="src\math.hpp" />
@@ -141,6 +142,7 @@
     <ClInclude Include="src\rendering\sprite.hpp" />
     <ClInclude Include="src\rendering\surface.hpp" />
     <ClInclude Include="src\rendering\vertex.hpp" />
+    <ClInclude Include="src\time.hpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="assets\shaders\default_ps.hlsl">
