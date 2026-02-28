@@ -131,7 +131,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\rendering\camera.hpp" />
-    <ClInclude Include="src\rendering\drawable.hpp" />
+    <ClInclude Include="src\rendering\sprite_drawable.hpp" />
     <ClInclude Include="src\rendering\mesh.hpp" />
     <ClInclude Include="src\rendering\sprite_atlas.hpp" />
     <ClInclude Include="src\math.hpp" />

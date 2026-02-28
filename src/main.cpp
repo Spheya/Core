@@ -7,7 +7,7 @@
 static std::atomic_bool s_closeRequested; // NOLINT
 
 static void applicationLoop() {
-	Drawable drawables[] = {
+	SpriteDrawable drawables[] = {
 		{ .sprite = SpriteAtlas::getInstance().get("miku.png"), .matrix = glm::mat4(1.0f) },
 		{ .sprite = SpriteAtlas::getInstance().get("player_idle_1.png"), .matrix = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f)) }
 	};
@@ -23,7 +23,7 @@ static void applicationLoop() {
 			float aspect = float(surface->getWidth()) / float(surface->getHeight());
 			Camera camera = { .view = viewMat, .proj = glm::ortho(-aspect, aspect, 1.0f, -1.0f), .target = surface.get() };
 			viewMat = glm::rotate(viewMat, 1.0f, glm::vec3(0.0f, 0.0f, 1.0f));
-			GraphicsContext::getInstance().draw(camera, drawables);
+			GraphicsContext::getInstance().drawSprites(camera, drawables);
 		}
 
 		bool first = true;

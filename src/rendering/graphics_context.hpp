@@ -4,8 +4,8 @@
 #include <span>
 
 #include "camera.hpp"
-#include "drawable.hpp"
 #include "mesh.hpp"
+#include "sprite_drawable.hpp"
 #include "surface.hpp"
 
 class GraphicsContext {
@@ -28,7 +28,7 @@ public:
 	[[nodiscard]] std::span<const std::unique_ptr<ScreenSurface>> getScreenSurfaces() const { return m_screenSurfaces; }
 
 	void prepareCameraMatrices(const Camera& camera);
-	void draw(const Camera& camera, std::span<const Drawable> drawables);
+	void drawSprites(const Camera& camera, std::span<const SpriteDrawable> drawables);
 
 private:
 	void loadResources();

@@ -215,7 +215,7 @@ void GraphicsContext::prepareCameraMatrices(const Camera& camera) {
 	m_context->Unmap(m_cameraBuffer.Get(), 0);
 }
 
-void GraphicsContext::draw(const Camera& camera, std::span<const Drawable> drawables) {
+void GraphicsContext::drawSprites(const Camera& camera, std::span<const SpriteDrawable> drawables) {
 	assert(camera.target);
 
 	// Prepare render target
