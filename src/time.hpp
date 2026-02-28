@@ -4,7 +4,7 @@
 
 class Time {
 public:
-	Time() : m_start(std::chrono::steady_clock::now()), m_prevFrame(m_start), m_deltaTime(0.0f), m_time(0.0) {}
+	Time() : m_start(std::chrono::steady_clock::now()), m_prevFrame(m_start), m_time(0.0), m_deltaTime(0.0f) {}
 
 	void update() {
 		auto currFrame = std::chrono::steady_clock::now();
@@ -13,12 +13,12 @@ public:
 		m_prevFrame = currFrame;
 	}
 
-	[[nodiscard]] float deltaTime() const { return m_deltaTime; }
 	[[nodiscard]] double time() const { return m_time; }
+	[[nodiscard]] float deltaTime() const { return m_deltaTime; }
 
 private:
 	std::chrono::steady_clock::time_point m_start;
 	std::chrono::steady_clock::time_point m_prevFrame;
-	float m_deltaTime;
 	double m_time;
+	float m_deltaTime;
 };
