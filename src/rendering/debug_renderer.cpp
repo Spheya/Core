@@ -51,9 +51,9 @@ void DebugRenderer::box(const BoundingBox& box, glm::vec4 color) {
 }
 
 void DebugRenderer::circle(glm::vec2 center, float radius, glm::vec4 color) {
-	for(int i = 0; i < 16; ++i) {
-		float alpha = i * glm::two_pi<float>() / 16.0f;
-		float beta = (i + 1) * glm::two_pi<float>() / 16.0f;
+	for(int i = 0; i < 12; ++i) {
+		float alpha = float(i) * glm::two_pi<float>() / 12.0f;
+		float beta = float(i + 1) * glm::two_pi<float>() / 12.0f;
 		line(glm::vec2(sin(alpha), cos(alpha)) * radius + center, glm::vec2(sin(beta), cos(beta)) * radius + center, color);
 	}
 }
