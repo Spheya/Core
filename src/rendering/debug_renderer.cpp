@@ -79,7 +79,9 @@ void DebugRenderer::draw() {
 	context->IASetVertexBuffers(0, 1, m_lineBuffer.GetAddressOf(), &stride, &offset);
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 	context->Draw(vertexCount, 0);
+}
 
+void DebugRenderer::clear() {
 	m_vertices.clear();
 }
 

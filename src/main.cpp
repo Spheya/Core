@@ -49,6 +49,10 @@ static void applicationLoop() {
 #endif
 		}
 
+#ifdef _DEBUG
+		GraphicsContext::getInstance().getDebugRenderer().clear();
+#endif
+
 		bool first = true;
 		for(const auto& surface : GraphicsContext::getInstance().getScreenSurfaces()) {
 			surface->getSwapchain()->Present(first ? 1 : 0, 0);

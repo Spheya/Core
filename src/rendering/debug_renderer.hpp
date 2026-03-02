@@ -21,6 +21,7 @@ public:
 	void circle(glm::vec2 center, float radius, glm::vec4 color = glm::vec4(1.0f));
 
 	void draw();
+	void clear();
 
 private:
 	struct Vertex {
