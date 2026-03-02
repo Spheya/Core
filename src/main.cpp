@@ -12,7 +12,8 @@ static std::atomic_bool s_closeRequested; // NOLINT
 
 static void applicationLoop() {
 	Scene scene;
-	scene.addEntity(std::make_unique<Player>());
+	auto* player = scene.addEntity(std::make_unique<Player>());
+	player->position = glm::vec2(48.0f, 48.0f);
 
 	Time time;
 
@@ -21,8 +22,7 @@ static void applicationLoop() {
 		scene.update(time);
 
 		for(const auto& surface : GraphicsContext::getInstance().getScreenSurfaces()) {
-			float aspect = float(surface->getWidth()) / float(surface->getHeight());
-			Camera camera = { .view = glm::mat4(1.0f), .proj = glm::ortho(-aspect, aspect, 1.0f, -1.0f), .target = surface.get() };
+			Camera camera = { .view = glm::mat4(1.0f), .proj = surface->getProjectionMatrix(), .target = surface.get() };
 			GraphicsContext::getInstance().drawSprites(camera, scene.buildSprites());
 
 #ifdef _DEBUG

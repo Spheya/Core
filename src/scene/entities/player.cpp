@@ -9,14 +9,14 @@ Player::Player() {
 	};
 
 	m_animation = Animation(runAnimSprites, 24, 2, 0);
-	localPhysicsBounds = { .min = glm::vec2(-0.25f, 0.0f), .max = glm::vec2(0.25f, 0.5f) };
-	localClickBounds = { .min = glm::vec2(-0.5f), .max = glm::vec2(0.5f) };
+	localPhysicsBounds = { .min = glm::vec2(-10.0f, 16.0f), .max = glm::vec2(10.0f, 48.0f) };
+	localClickBounds = { .min = glm::vec2(-48.0f), .max = glm::vec2(48.0f) };
 }
 
 void Player::onUpdate(const Time& time) {
 	m_animation.update(time);
 	m_sprite.sprite = m_animation.getCurrentFrame();
-	m_sprite.matrix = glm::translate(glm::mat4(1.0f), glm::vec3(position.x, position.y, 0.0f));
+	m_sprite.matrix = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(position.x, position.y, 0.0f)), glm::vec3(96.0f, 96.0f, 1.0f));
 }
 
 std::span<const SpriteDrawable> Player::getSprites() const {
