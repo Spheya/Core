@@ -50,7 +50,7 @@ void WindowPhysics::generateScreenBounds() {
 	target.emplace_back(bounds.min - 100, bounds.max + 100);
 
 	for(const auto& screen : SurfaceManager::getInstance().getScreenSurfaces()) {
-		IntBoundingBox sbox = { screen->getPosition(), screen->getPosition() + glm::ivec2(screen->getDimensions()) };
+		IntBoundingBox sbox = { .min = screen->getPosition(), .max = screen->getPosition() + glm::ivec2(screen->getDimensions()) };
 
 		for(const auto& bbox : target) {
 			if(!::overlaps(bbox, sbox)) {
