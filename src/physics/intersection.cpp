@@ -37,7 +37,7 @@ Intersection rayCast(glm::vec2 origin, glm::vec2 direction, const BoundingBox& b
 	return result;
 }
 
-Intersection boxCast(BoundingBox& origin, glm::vec2 direction, const BoundingBox& box, float maxDistance, bool excludeExit) {
+Intersection boxCast(const BoundingBox& origin, glm::vec2 direction, const BoundingBox& box, float maxDistance, bool excludeExit) {
 	glm::vec2 halfSize = (origin.max - origin.min) * 0.5f;
 	glm::vec2 center = origin.min + halfSize;
 	if(overlaps(origin, box)) halfSize = -halfSize;

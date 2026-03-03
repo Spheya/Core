@@ -16,12 +16,12 @@ static void applicationLoop() {
 	Scene scene;
 	auto* player = scene.addEntity(std::make_unique<Player>());
 	player->position = glm::vec2(48.0f, 48.0f);
+	player->flags = 1;
 
 	SurfaceManager::getInstance().getMainInput().add(0, std::make_unique<InputAction>(InputButton::MouseButtonLeft));
 
 	Time time;
 
-	BoundingBox bbox{ .min = glm::vec2(600.0f, 600.0f), .max = glm::vec2(1000.0f, 1000.0f) };
 	BoundingBox lineOrigin = { .min = glm::vec2(450.0f, 450.0f), .max = glm::vec2(500.0f, 475.0f) };
 
 	while(!s_closeRequested) {
@@ -32,13 +32,12 @@ static void applicationLoop() {
 		scene.update(time);
 
 #ifdef _DEBUG
-		GraphicsContext::getInstance().getDebugRenderer().box(bbox);
 		GraphicsContext::getInstance().getDebugRenderer().box(lineOrigin, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 
 		glm::vec2 bCenter = (lineOrigin.min + lineOrigin.max) * 0.5f;
 		glm::vec2 rd = glm::normalize(SurfaceManager::getInstance().getMainInput().getMousePos() - bCenter);
 		float maxDist = glm::distance(SurfaceManager::getInstance().getMainInput().getMousePos(), bCenter);
-		Intersection hit = boxCast(lineOrigin, rd, bbox, maxDist);
+		Intersection hit = scene.boxCast(lineOrigin, rd, maxDist);
 		glm::vec2 hitPos = bCenter + rd * hit.distance;
 
 		BoundingBox tmp{

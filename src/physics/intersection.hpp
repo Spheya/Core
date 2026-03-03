@@ -6,13 +6,16 @@
 struct Intersection {
 	float distance;
 	glm::vec2 normal;
-
-	bool doesHit() const { return distance > 0.0f; }
 };
+
+inline Intersection pickClosestIntersection(Intersection a, Intersection b) {
+	if(a.distance < b.distance) return a;
+	return b;
+}
 
 inline bool overlaps(const BoundingBox& a, const BoundingBox& b) {
 	return a.min.x < b.max.x && a.max.x > b.min.x && a.min.y < b.max.y && a.max.y > b.min.y;
 }
 
 Intersection rayCast(glm::vec2 origin, glm::vec2 direction, const BoundingBox& box, float maxDistance = 1e32f, bool excludeExit = false);
-Intersection boxCast(BoundingBox& origin, glm::vec2 direction, const BoundingBox& box, float maxDistance = 1e32f, bool excludeExit = false);
+Intersection boxCast(const BoundingBox& origin, glm::vec2 direction, const BoundingBox& box, float maxDistance = 1e32f, bool excludeExit = false);

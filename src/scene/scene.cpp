@@ -29,6 +29,39 @@ void Scene::update(const Time& time) {
 #endif
 }
 
+bool Scene::overlaps(const BoundingBox& box, uint32_t flags) const {
+	for(const auto& entity : m_entities) {
+		if((entity->flags & flags) == 0) continue;
+		auto bounds = entity->getPhysicsBounds();
+		if(::overlaps(box, bounds)) return true;
+	}
+	return false;
+}
+
+Intersection Scene::rayCast(glm::vec2 origin, glm::vec2 direction, float maxDistance, bool excludeExit, uint32_t flags) const {
+	Intersection hit{ .distance = maxDistance, .normal = glm::vec2(0.0f) };
+
+	for(const auto& entity : m_entities) {
+		if((entity->flags & flags) == 0) continue;
+		auto bounds = entity->getPhysicsBounds();
+		hit = pickClosestIntersection(hit, ::rayCast(origin, direction, bounds, hit.distance, excludeExit));
+	}
+
+	return hit;
+}
+
+Intersection Scene::boxCast(const BoundingBox& origin, glm::vec2 direction, float maxDistance, bool excludeExit, uint32_t flags) const {
+	Intersection hit{ .distance = maxDistance, .normal = glm::vec2(0.0f) };
+
+	for(const auto& entity : m_entities) {
+		if((entity->flags & flags) == 0) continue;
+		auto bounds = entity->getPhysicsBounds();
+		hit = pickClosestIntersection(hit, ::boxCast(origin, direction, bounds, hit.distance, excludeExit));
+	}
+
+	return hit;
+}
+
 std::span<const SpriteDrawable> Scene::buildSprites() {
 	m_sprites.clear();
 
