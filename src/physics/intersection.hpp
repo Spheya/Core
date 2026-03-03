@@ -14,5 +14,5 @@ inline bool overlaps(const BoundingBox& a, const BoundingBox& b) {
 	return a.min.x < b.max.x && a.max.x > b.min.x && a.min.y < b.max.y && a.max.y > b.min.y;
 }
 
-Intersection rayCast(glm::vec2 origin, glm::vec2 direction, const BoundingBox& box, float maxDistance = 1e32f);
-Intersection boxCast(BoundingBox& origin, glm::vec2 direction, const BoundingBox& box, float maxDistance = 1e32f);
+Intersection rayCast(glm::vec2 origin, glm::vec2 direction, const BoundingBox& box, float maxDistance = 1e32f, bool excludeExit = false);
+Intersection boxCast(BoundingBox& origin, glm::vec2 direction, const BoundingBox& box, float maxDistance = 1e32f, bool excludeExit = false);

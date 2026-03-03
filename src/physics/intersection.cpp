@@ -1,6 +1,6 @@
 #include "intersection.hpp"
 
-Intersection rayCast(glm::vec2 origin, glm::vec2 direction, const BoundingBox& box, float maxDistance) {
+Intersection rayCast(glm::vec2 origin, glm::vec2 direction, const BoundingBox& box, float maxDistance, bool excludeExit) {
 	Intersection result{ .distance = maxDistance, .normal = glm::vec2(0.0f) };
 
 	glm::vec2 t1 = (box.min - origin) / direction;
@@ -16,7 +16,7 @@ Intersection rayCast(glm::vec2 origin, glm::vec2 direction, const BoundingBox& b
 
 	if(tnear < 0.0f) {
 		// Exiting
-		if(tfar > maxDistance) return result;
+		if(excludeExit || tfar > maxDistance) return result;
 		result.distance = tfar;
 
 		if(tmax.x < tmax.y)
@@ -37,10 +37,10 @@ Intersection rayCast(glm::vec2 origin, glm::vec2 direction, const BoundingBox& b
 	return result;
 }
 
-Intersection boxCast(BoundingBox& origin, glm::vec2 direction, const BoundingBox& box, float maxDistance) {
+Intersection boxCast(BoundingBox& origin, glm::vec2 direction, const BoundingBox& box, float maxDistance, bool excludeExit) {
 	glm::vec2 halfSize = (origin.max - origin.min) * 0.5f;
 	glm::vec2 center = origin.min + halfSize;
 	if(overlaps(origin, box)) halfSize = -halfSize;
 
-	return rayCast(center, direction, BoundingBox{ .min = box.min - halfSize, .max = box.max + halfSize }, maxDistance);
+	return rayCast(center, direction, BoundingBox{ .min = box.min - halfSize, .max = box.max + halfSize }, maxDistance, excludeExit);
 }
