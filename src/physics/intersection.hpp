@@ -15,6 +15,10 @@ inline Intersection pickClosestIntersection(Intersection a, Intersection b) {
 	return b;
 }
 
+inline bool overlaps(const IntBoundingBox& a, const IntBoundingBox& b) {
+	return a.min.x < b.max.x && a.max.x > b.min.x && a.min.y < b.max.y && a.max.y > b.min.y;
+}
+
 inline bool overlaps(const BoundingBox& a, const BoundingBox& b) {
 	return a.min.x < b.max.x && a.max.x > b.min.x && a.min.y < b.max.y && a.max.y > b.min.y;
 }

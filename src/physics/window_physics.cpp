@@ -42,28 +42,33 @@ void WindowPhysics::update() {
 
 void WindowPhysics::generateScreenBounds() {
 	m_screenEdges.clear();
-	BoundingBox bounds = SurfaceManager::getInstance().getVirtualScreenBounds();
-	m_screenEdges.emplace_back(bounds.min - 100.0f, bounds.max + 100.0f);
+	IntBoundingBox bounds = IntBoundingBox{ .min = glm::ivec2(SurfaceManager::getInstance().getVirtualScreenBounds().min),
+		                                    .max = glm::ivec2(SurfaceManager::getInstance().getVirtualScreenBounds().max) };
 
-	std::vector<BoundingBox> buffer;
+	std::vector<IntBoundingBox> buffer;
+	std::vector<IntBoundingBox> target;
+	target.emplace_back(bounds.min - 100, bounds.max + 100);
+
 	for(const auto& screen : SurfaceManager::getInstance().getScreenSurfaces()) {
-		BoundingBox sbox = { glm::vec2(screen->getPosition()), glm::vec2(screen->getPosition() + glm::ivec2(screen->getDimensions())) };
+		IntBoundingBox sbox = { screen->getPosition(), screen->getPosition() + glm::ivec2(screen->getDimensions()) };
 
-		for(const auto& bbox : m_screenEdges) {
+		for(const auto& bbox : target) {
 			if(!::overlaps(bbox, sbox)) {
 				buffer.push_back(bbox);
 				continue;
 			}
 
-			if(bbox.max.x > sbox.max.x) buffer.emplace_back(glm::vec2(sbox.max.x, bbox.min.y), glm::vec2(bbox.max.x, bbox.max.y));
-			if(bbox.min.x < sbox.min.x) buffer.emplace_back(glm::vec2(bbox.min.x, bbox.min.y), glm::vec2(sbox.min.x, bbox.max.y));
-			if(bbox.max.y > sbox.max.y) buffer.emplace_back(glm::vec2(sbox.min.x, sbox.max.y), glm::vec2(sbox.max.x, bbox.max.y));
-			if(bbox.min.y < sbox.min.y) buffer.emplace_back(glm::vec2(sbox.min.x, bbox.min.y), glm::vec2(sbox.max.x, sbox.min.y));
+			if(bbox.max.x > sbox.max.x) buffer.emplace_back(glm::ivec2(sbox.max.x, bbox.min.y), glm::ivec2(bbox.max.x, bbox.max.y));
+			if(bbox.min.x < sbox.min.x) buffer.emplace_back(glm::ivec2(bbox.min.x, bbox.min.y), glm::ivec2(sbox.min.x, bbox.max.y));
+			if(bbox.max.y > sbox.max.y) buffer.emplace_back(glm::ivec2(sbox.min.x, sbox.max.y), glm::ivec2(sbox.max.x, bbox.max.y));
+			if(bbox.min.y < sbox.min.y) buffer.emplace_back(glm::ivec2(sbox.min.x, bbox.min.y), glm::ivec2(sbox.max.x, sbox.min.y));
 		}
 
-		std::swap(buffer, m_screenEdges);
+		std::swap(buffer, target);
 		buffer.clear();
 	}
+
+	for(const auto& bbox : target) m_screenEdges.emplace_back(glm::vec2(bbox.min), glm::vec2(bbox.max));
 }
 
 bool WindowPhysics::overlaps(const BoundingBox& box) const {
