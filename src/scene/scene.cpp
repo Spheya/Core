@@ -38,25 +38,25 @@ bool Scene::overlaps(const BoundingBox& box, uint32_t flags) const {
 	return false;
 }
 
-Intersection Scene::rayCast(glm::vec2 origin, glm::vec2 direction, float maxDistance, bool excludeExit, uint32_t flags) const {
+Intersection Scene::rayCast(glm::vec2 origin, glm::vec2 direction, float maxDistance, uint32_t flags) const {
 	Intersection hit{ .distance = maxDistance, .normal = glm::vec2(0.0f) };
 
 	for(const auto& entity : m_entities) {
 		if((entity->flags & flags) == 0) continue;
 		auto bounds = entity->getPhysicsBounds();
-		hit = pickClosestIntersection(hit, ::rayCast(origin, direction, bounds, hit.distance, excludeExit));
+		hit = pickClosestIntersection(hit, ::rayCast(origin, direction, bounds, hit.distance));
 	}
 
 	return hit;
 }
 
-Intersection Scene::boxCast(const BoundingBox& origin, glm::vec2 direction, float maxDistance, bool excludeExit, uint32_t flags) const {
+Intersection Scene::boxCast(const BoundingBox& origin, glm::vec2 direction, float maxDistance, uint32_t flags) const {
 	Intersection hit{ .distance = maxDistance, .normal = glm::vec2(0.0f) };
 
 	for(const auto& entity : m_entities) {
 		if((entity->flags & flags) == 0) continue;
 		auto bounds = entity->getPhysicsBounds();
-		hit = pickClosestIntersection(hit, ::boxCast(origin, direction, bounds, hit.distance, excludeExit));
+		hit = pickClosestIntersection(hit, ::boxCast(origin, direction, bounds, hit.distance));
 	}
 
 	return hit;

@@ -1,6 +1,7 @@
 #include <thread>
 
 #include "physics/intersection.hpp"
+#include "physics/window_physics.hpp"
 #include "platform.hpp"
 #include "rendering/animation.hpp"
 #include "rendering/graphics_context.hpp"
@@ -13,6 +14,8 @@
 static std::atomic_bool s_closeRequested; // NOLINT
 
 static void applicationLoop() {
+	WindowPhysics windowPhysics;
+
 	Scene scene;
 	auto* player = scene.addEntity(std::make_unique<Player>());
 	player->position = glm::vec2(48.0f, 48.0f);
@@ -28,6 +31,7 @@ static void applicationLoop() {
 		time.update();
 		SurfaceManager::getInstance().getMainInput().update();
 		if(SurfaceManager::getInstance().getMainInput().getAction(0)->isPressed()) { logger::log("yippe"); }
+		windowPhysics.update();
 
 		scene.update(time);
 
@@ -37,7 +41,7 @@ static void applicationLoop() {
 		glm::vec2 bCenter = (lineOrigin.min + lineOrigin.max) * 0.5f;
 		glm::vec2 rd = glm::normalize(SurfaceManager::getInstance().getMainInput().getMousePos() - bCenter);
 		float maxDist = glm::distance(SurfaceManager::getInstance().getMainInput().getMousePos(), bCenter);
-		Intersection hit = scene.boxCast(lineOrigin, rd, maxDist);
+		Intersection hit = windowPhysics.boxCast(lineOrigin, rd, maxDist);
 		glm::vec2 hitPos = bCenter + rd * hit.distance;
 
 		BoundingBox tmp{
