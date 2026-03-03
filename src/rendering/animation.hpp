@@ -16,16 +16,16 @@ public:
 	    frameAnimationOffset(frameAnimationOffset),
 	    m_sprites(sprites.begin(), sprites.end()),
 	    m_currentSprite(m_sprites.begin()),
-	    animationOffset(0) {}
+	    m_animationOffset(0ull) {}
 
 	void reset(const Time& time) {
-		animationOffset = calcFrame(time);
+		m_animationOffset = calcFrame(time);
 		m_currentSprite = m_sprites.begin();
 	}
 
 	void update(const Time& time) {
-		unsigned frame = calcFrame(time) - animationOffset;
-		m_currentSprite = m_sprites.begin() + (frame % m_sprites.size());
+		unsigned long long frame = calcFrame(time) - m_animationOffset;
+		m_currentSprite = m_sprites.begin() + unsigned(frame % m_sprites.size());
 	}
 
 	const Sprite& getCurrentFrame() { return *m_currentSprite; }
@@ -36,10 +36,12 @@ public:
 	unsigned frameAnimationOffset = 0;
 
 private:
-	unsigned calcFrame(const Time& time) const { return (unsigned(time.time() * frameRate) + frameAnimationOffset) / animateOn; }
+	unsigned long long calcFrame(const Time& time) const {
+		return ((unsigned long long)(time.time() * float(frameRate)) + frameAnimationOffset) / animateOn;
+	}
 
 private:
 	std::vector<Sprite> m_sprites;
 	std::vector<Sprite>::iterator m_currentSprite;
-	unsigned animationOffset = 0;
+	unsigned long long m_animationOffset = 0;
 };
