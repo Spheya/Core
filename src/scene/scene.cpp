@@ -33,12 +33,14 @@ void Scene::addWindowPhysics(const WindowPhysics* windowPhysics) {
 	m_windowPhysics = windowPhysics;
 }
 
-bool Scene::overlaps(const BoundingBox& box, uint32_t flags) const {
+bool Scene::overlaps(const BoundingBox& box, uint32_t flags, const Entity* exclude, bool includeWindows) const {
 	for(const auto& entity : m_entities) {
-		if((entity->flags & flags) == 0) continue;
+		if(entity.get() == exclude || (entity->flags & flags) == 0) continue;
 		auto bounds = entity->getPhysicsBounds();
 		if(::overlaps(box, bounds)) return true;
 	}
+
+	if(includeWindows && m_windowPhysics) return m_windowPhysics->overlaps(box);
 	return false;
 }
 

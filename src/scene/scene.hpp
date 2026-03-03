@@ -27,7 +27,7 @@ public:
 	void update(const Time& time);
 	void addWindowPhysics(const WindowPhysics* windowPhysics);
 
-	[[nodiscard]] bool overlaps(const BoundingBox& box, uint32_t flags = ~0u) const;
+	[[nodiscard]] bool overlaps(const BoundingBox& box, uint32_t flags = ~0u, const Entity* exclude = nullptr, bool includeWindows = true) const;
 	[[nodiscard]] Intersection rayCast(
 	    glm::vec2 origin, glm::vec2 direction, float maxDistance = 1e32f, uint32_t flags = ~0u, const Entity* exclude = nullptr,
 	    bool includeWindows = true

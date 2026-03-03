@@ -1,4 +1,7 @@
 #include "window_physics.hpp"
+
+#include <algorithm>
+
 #include "platform.hpp"
 #include "rendering/graphics_context.hpp"
 
@@ -23,9 +26,7 @@ void WindowPhysics::update() {
 }
 
 bool WindowPhysics::overlaps(const BoundingBox& box) const {
-	for(auto& hitBox : m_hitboxes)
-		if(::overlaps(hitBox, box)) return true;
-	return false;
+	return std::ranges::any_of(m_hitboxes, [&box](const BoundingBox& hitbox) { return ::overlaps(hitbox, box); });
 }
 
 Intersection WindowPhysics::rayCast(glm::vec2 origin, glm::vec2 direction, float maxDistance) const {
