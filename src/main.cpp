@@ -15,6 +15,8 @@ static std::atomic_bool s_closeRequested; // NOLINT
 
 static void applicationLoop() {
 	WindowPhysics windowPhysics;
+	windowPhysics.generateScreenBounds();
+
 	Scene scene;
 	scene.addWindowPhysics(&windowPhysics);
 
@@ -26,7 +28,7 @@ static void applicationLoop() {
 
 	Time time;
 
-	BoundingBox lineOrigin = { .min = glm::vec2(450.0f, 450.0f), .max = glm::vec2(500.0f, 475.0f) };
+	BoundingBox lineOrigin = { .min = glm::vec2(450.0f, 350.0f), .max = glm::vec2(500.0f, 375.0f) };
 
 	while(!s_closeRequested) {
 		time.update();
@@ -41,7 +43,7 @@ static void applicationLoop() {
 
 		glm::vec2 bCenter = (lineOrigin.min + lineOrigin.max) * 0.5f;
 		glm::vec2 rd = glm::normalize(SurfaceManager::getInstance().getMainInput().getMousePos() - bCenter);
-		float maxDist = glm::distance(SurfaceManager::getInstance().getMainInput().getMousePos(), bCenter);
+		float maxDist = 1e32f; // glm::distance(SurfaceManager::getInstance().getMainInput().getMousePos(), bCenter);
 		Intersection hit = windowPhysics.boxCast(lineOrigin, rd, maxDist);
 		glm::vec2 hitPos = bCenter + rd * hit.distance;
 

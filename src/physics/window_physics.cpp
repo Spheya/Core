@@ -4,6 +4,7 @@
 
 #include "platform.hpp"
 #include "rendering/graphics_context.hpp"
+#include "rendering/surface_manager.hpp"
 
 void WindowPhysics::update() {
 	// todo: dont do this every frame
@@ -22,17 +23,66 @@ void WindowPhysics::update() {
 
 #ifdef _DEBUG
 	for(const auto& box : m_hitboxes) GraphicsContext::getInstance().getDebugRenderer().box(box, glm::vec4(0.0f, 1.0f, 0.0f, 0.3f));
+
+	BoundingBox screen = SurfaceManager::getInstance().getVirtualScreenBounds();
+	glm::vec2 s = screen.max - screen.min;
+
+	for(BoundingBox box : m_screenEdges) {
+		box.min -= glm::vec2(screen.min.x, screen.min.y);
+		box.max -= glm::vec2(screen.min.x, screen.min.y);
+		box.min = (box.min / s.x) * 300.0f;
+		box.max = (box.max / s.x) * 300.0f;
+		box.min += glm::vec2(32.0f);
+		box.max += glm::vec2(32.0f);
+
+		GraphicsContext::getInstance().getDebugRenderer().box(box, glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
+	}
 #endif
+}
+
+void WindowPhysics::generateScreenBounds() {
+	m_screenEdges.clear();
+	BoundingBox bounds = SurfaceManager::getInstance().getVirtualScreenBounds();
+	m_screenEdges.emplace_back(bounds.min - 100.0f, bounds.max + 100.0f);
+
+	std::vector<BoundingBox> buffer;
+	for(const auto& screen : SurfaceManager::getInstance().getScreenSurfaces()) {
+		BoundingBox sbox = { glm::vec2(screen->getPosition()), glm::vec2(screen->getPosition() + glm::ivec2(screen->getDimensions())) };
+
+		for(const auto& bbox : m_screenEdges) {
+			if(!::overlaps(bbox, sbox)) {
+				buffer.push_back(bbox);
+				continue;
+			}
+
+			if(bbox.max.x > sbox.max.x) buffer.emplace_back(glm::vec2(sbox.max.x, bbox.min.y), glm::vec2(bbox.max.x, bbox.max.y));
+			if(bbox.min.x < sbox.min.x) buffer.emplace_back(glm::vec2(bbox.min.x, bbox.min.y), glm::vec2(sbox.min.x, bbox.max.y));
+			if(bbox.max.y > sbox.max.y) buffer.emplace_back(glm::vec2(sbox.min.x, sbox.max.y), glm::vec2(sbox.max.x, bbox.max.y));
+			if(bbox.min.y < sbox.min.y) buffer.emplace_back(glm::vec2(sbox.min.x, bbox.min.y), glm::vec2(sbox.max.x, sbox.min.y));
+		}
+
+		std::swap(buffer, m_screenEdges);
+		buffer.clear();
+	}
 }
 
 bool WindowPhysics::overlaps(const BoundingBox& box) const {
 	return std::ranges::any_of(m_hitboxes, [&box](const BoundingBox& hitbox) { return ::overlaps(hitbox, box); });
 }
 
+bool WindowPhysics::overlaps(glm::vec2 pos) const {
+	return std::ranges::any_of(m_hitboxes, [pos](const BoundingBox& hitbox) { return ::overlaps(hitbox, pos); });
+}
+
 Intersection WindowPhysics::rayCast(glm::vec2 origin, glm::vec2 direction, float maxDistance) const {
 	Intersection miss{ .distance = maxDistance, .normal = glm::vec2(0.0f) };
 	Intersection hit{ .distance = maxDistance, .normal = glm::vec2(0.0f) };
 	float d = 0.0f;
+
+	for(const auto& edge : m_screenEdges) {
+		Intersection edgeHit = ::rayCast(origin, direction, edge, hit.distance, RayCastExclude::Exit);
+		if(edgeHit.distance != hit.distance) hit = edgeHit;
+	}
 
 	for(const auto& hitBox : m_hitboxes) {
 		if(::overlaps(hitBox, origin)) {
@@ -59,6 +109,11 @@ Intersection WindowPhysics::boxCast(BoundingBox origin, glm::vec2 direction, flo
 	Intersection miss{ .distance = maxDistance, .normal = glm::vec2(0.0f) };
 	Intersection hit{ .distance = maxDistance, .normal = glm::vec2(0.0f) };
 	float d = 0.0f;
+
+	for(const auto& edge : m_screenEdges) {
+		Intersection edgeHit = ::boxCast(origin, direction, edge, hit.distance, RayCastExclude::Exit);
+		if(edgeHit.distance != hit.distance) hit = edgeHit;
+	}
 
 	for(const auto& hitBox : m_hitboxes) {
 		if(::overlaps(hitBox, origin)) {
