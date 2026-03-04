@@ -25,7 +25,7 @@ private:
 	const InputAction* m_duckInput;
 
 	glm::vec2 m_velocity;
-	bool m_grounded;
+	float m_slideCooldown;
 
 	bool m_flipped;
 	SpriteDrawable m_sprite;

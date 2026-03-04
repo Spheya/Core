@@ -1,22 +1,34 @@
 #include "player.hpp"
+
+#include <cmath>
+
 #include "input/input_ids.hpp"
 #include "rendering/graphics_context.hpp"
 #include "rendering/surface_manager.hpp"
 
 constexpr static float speed = 500.0f;
 constexpr static float friction = 18.0f;
-constexpr static float jumpHeight = 500.0f;
-constexpr static float jumpDuration = 1.0f;
+constexpr static float slideFriction = 4.0f;
+constexpr static float airFriction = 4.0f;
+constexpr static float jumpHeight = 200.0f;
+constexpr static float duckJumpHeight = 400.0f;
+constexpr static float jumpDuration = 0.8f;
+constexpr static float slideJumpSpeed = 2000.0f;
+constexpr static float slideJumpHeight = 125.0f;
+constexpr static float slideVelocityMult = 2.5f;
+constexpr static float slideCooldown = 0.25f;
 
 constexpr static float jumpForce = 4.0f * jumpHeight / jumpDuration;
 constexpr static float gravity = 2.0f * jumpForce / jumpDuration;
+const static float duckJumpForce = std::sqrt(2.0f * gravity * duckJumpHeight); // sqrt isnt constexpr were cooked
+const static float slideJumpForce = std::sqrt(2.0f * gravity * slideJumpHeight);
 
 Player::Player(CharacterAnimations animations, const Input* input) :
     m_movementInput(input ? input->getAxis1D(InputId_PlayerMovement) : nullptr),
     m_jumpInput(input ? input->getAction(InputId_PlayerJump) : nullptr),
     m_duckInput(input ? input->getAction(InputId_PlayerDuck) : nullptr),
     m_velocity(0.0f),
-    m_grounded(false),
+    m_slideCooldown(0.0f),
     m_flipped(false),
     m_animator(std::move(animations)) {
 	localPhysicsBounds = { .min = glm::vec2(-10.0f, 16.0f), .max = glm::vec2(10.0f, 48.0f) };
@@ -29,43 +41,65 @@ void Player::setInput(const Input* input) {
 }
 
 void Player::onUpdate(const Time& time) {
-	updateClickableRegion();
+	bool grounded = scene->boxCast(getPhysicsBounds(), glm::vec2(0.0f, 1.0f), 1.0f, ~0u, this).distance != 1.0f;
+	m_slideCooldown -= time.deltaTime();
 
 	float inputDir = m_movementInput ? m_movementInput->getValue() : 0.0f;
 	bool jump = m_jumpInput ? m_jumpInput->isDown() : false;
-	// bool jumpPress = m_jumpInput ? m_jumpInput->isPressed() : false;
 	bool duck = m_duckInput ? m_duckInput->isDown() : false;
+	bool duckPressed = m_duckInput ? m_duckInput->isPressed() : false;
+	bool slide = grounded && duck && std::abs(m_velocity.x) > 200.0f;
 
-	float horAcc = inputDir * speed * friction;
-	float fric = m_velocity.x * std::min(friction * time.deltaTime(), 1.0f);
-
-	m_grounded = scene->boxCast(getPhysicsBounds(), glm::vec2(0.0f, 1.0f), 1.0f, ~0u, this).distance != 1.0f;
-
-	glm::vec2 prevVelocity = m_velocity;
-
-	if(jump && m_grounded) {
-		m_velocity.y = -jumpForce;
-		prevVelocity.y -= jumpForce; // Do not interpolate jumping
+	// slide boost
+	if(slide && duckPressed && m_slideCooldown <= 0.0f) {
+		m_velocity.x *= slideVelocityMult;
+		m_slideCooldown = slideCooldown;
 	}
 
-	m_velocity.x -= fric;
-	m_velocity.x += horAcc * time.deltaTime();
-	m_velocity.y += gravity * time.deltaTime();
+	// wahoo (jump)
+	if(jump && grounded) {
+		float force = jumpForce;
+		if(duck && !slide) force = duckJumpForce;
+		if(slide) {
+			m_velocity.x = glm::sign(m_velocity.x) * slideJumpSpeed;
+			force = slideJumpForce;
+		}
 
+		m_velocity.y = -force;
+	}
+
+	// select the correct friction coefficient
+	float frictionCoefficient = friction;
+	if(!grounded) frictionCoefficient = airFriction;
+	if(grounded && duck) {
+		frictionCoefficient = slideFriction;
+		inputDir = 0.0f;
+	}
+
+	// move the rabbit
+	glm::vec2 prevVelocity = m_velocity;                                                   // we do this after all instantanious forces are applied
+	m_velocity.x += inputDir * speed * frictionCoefficient * time.deltaTime();             // movement
+	m_velocity.x -= m_velocity.x * std::min(frictionCoefficient * time.deltaTime(), 1.0f); // friction
+	m_velocity.y += gravity * time.deltaTime();                                            // gravity
 	move((m_velocity + prevVelocity) * 0.5f * time.deltaTime());
 
+	// select the correct animation for our bunny
 	if(inputDir < 0.0f) {
 		m_flipped = true;
 	} else if(inputDir > 0.0f) {
 		m_flipped = false;
 	}
 
-	if(m_grounded) {
-		if(inputDir != 0.0f) {
-			m_animator.setAnimation(CharacterAnimation::Run);
-		} else {
-			if(duck) {
+	if(grounded) {
+		if(duck) {
+			if(slide) {
+				m_animator.setAnimation(CharacterAnimation::Slide);
+			} else {
 				m_animator.setAnimation(CharacterAnimation::Duck);
+			}
+		} else {
+			if(inputDir != 0.0f) {
+				m_animator.setAnimation(CharacterAnimation::Run);
 			} else {
 				m_animator.setAnimation(CharacterAnimation::Idle);
 			}
@@ -80,9 +114,11 @@ void Player::onUpdate(const Time& time) {
 
 	m_animator.update(time);
 
+	// update the visuals
 	m_sprite.sprite = m_animator.getCurrentFrame();
 	m_sprite.matrix =
 	    glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(position.x, position.y, 0.0f)), glm::vec3(m_flipped ? -96.0f : 96.0f, 96.0f, 1.0f));
+	updateClickableRegion();
 }
 
 std::span<const SpriteDrawable> Player::getSprites() const {
