@@ -17,6 +17,12 @@ public:
 	[[nodiscard]] Intersection boxCast(BoundingBox origin, glm::vec2 direction, float maxDistance = 1e32f) const;
 
 private:
-	std::vector<BoundingBox> m_hitboxes;
+	struct PhysicsWindow {
+		BoundingBox bbox;
+		bool ignore;
+	};
+
+private:
+	std::vector<PhysicsWindow> m_hitboxes;
 	std::vector<BoundingBox> m_screenEdges;
 };

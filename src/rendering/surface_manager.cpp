@@ -20,6 +20,8 @@ static LRESULT CALLBACK ClickWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
 		SetWindowRgn(hWnd, reinterpret_cast<HRGN>(wParam), false); // NOLINT
 		SurfaceManager::getInstance().consumeClickableRegion();
 		break;
+	case WM_SETFOCUS: SurfaceManager::getInstance().getMainInput().notifyFocus(true); break;
+	case WM_KILLFOCUS: SurfaceManager::getInstance().getMainInput().notifyFocus(false); break;
 	case WM_LBUTTONDOWN: SurfaceManager::getInstance().getMainInput().notifyButtonPress(InputButton::MouseButtonLeft); break;
 	case WM_LBUTTONUP: SurfaceManager::getInstance().getMainInput().notifyButtonRelease(InputButton::MouseButtonLeft); break;
 	case WM_RBUTTONDOWN: SurfaceManager::getInstance().getMainInput().notifyButtonPress(InputButton::MouseButtonRight); break;
@@ -111,27 +113,13 @@ static BOOL CALLBACK createScreenSurface(HMONITOR hMonitor, HDC /* hdcMonitor */
 void SurfaceManager::initialize(HINSTANCE hInstance) {
 	assert(!s_instance);
 	s_instance = new SurfaceManager(hInstance);
-	EnumDisplayMonitors(nullptr, nullptr, createScreenSurface, reinterpret_cast<LPARAM>(hInstance));
-	GraphicsContext::getInstance().getCompositionDevice()->Commit();
-}
-
-void SurfaceManager::close() {
-	assert(s_instance);
-	delete s_instance;
-	s_instance = nullptr;
-}
-
-SurfaceManager::SurfaceManager(HINSTANCE hInstance) : m_rgn(nullptr), m_vScreenBounds{} {
-	initializeWindowClasses(hInstance);
 
 	int vScreenX = GetSystemMetrics(SM_XVIRTUALSCREEN);
 	int vScreenY = GetSystemMetrics(SM_YVIRTUALSCREEN);
 	int vScreenW = GetSystemMetrics(SM_CXVIRTUALSCREEN);
 	int vScreenH = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
-	m_vScreenBounds = BoundingBox{ .min = glm::vec2(vScreenX, vScreenY), .max = glm::vec2(vScreenX + vScreenW, vScreenY + vScreenH) };
-
-	m_clickWindow = CreateWindowEx(
+	s_instance->m_clickWindow = CreateWindowEx(
 	    WS_EX_LAYERED | WS_EX_NOREDIRECTIONBITMAP | WS_EX_TOPMOST | WS_EX_TOOLWINDOW,
 	    L"ClickWindow",
 	    L"",
@@ -146,9 +134,28 @@ SurfaceManager::SurfaceManager(HINSTANCE hInstance) : m_rgn(nullptr), m_vScreenB
 	    nullptr
 	);
 
-	SetWindowRgn(m_clickWindow, CreateRectRgn(0, 0, 0, 0), false);
+	SetWindowRgn(s_instance->m_clickWindow, CreateRectRgn(0, 0, 0, 0), false);
+	ShowWindow(s_instance->m_clickWindow, SW_SHOW);
 
-	ShowWindow(m_clickWindow, SW_SHOW);
+	EnumDisplayMonitors(nullptr, nullptr, createScreenSurface, reinterpret_cast<LPARAM>(hInstance));
+	GraphicsContext::getInstance().getCompositionDevice()->Commit();
+}
+
+void SurfaceManager::close() {
+	assert(s_instance);
+	delete s_instance;
+	s_instance = nullptr;
+}
+
+SurfaceManager::SurfaceManager(HINSTANCE hInstance) : m_clickWindow(nullptr), m_rgn(nullptr), m_vScreenBounds{} {
+	initializeWindowClasses(hInstance);
+
+	int vScreenX = GetSystemMetrics(SM_XVIRTUALSCREEN);
+	int vScreenY = GetSystemMetrics(SM_YVIRTUALSCREEN);
+	int vScreenW = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+	int vScreenH = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+
+	m_vScreenBounds = BoundingBox{ .min = glm::vec2(vScreenX, vScreenY), .max = glm::vec2(vScreenX + vScreenW, vScreenY + vScreenH) };
 }
 
 SurfaceManager::~SurfaceManager() {
