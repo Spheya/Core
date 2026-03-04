@@ -18,11 +18,12 @@ void WindowPhysics::update() {
 		if(GetWindowLongPtr(hwnd, GWL_STYLE) & (WS_CHILD | WS_POPUP)) continue;
 
 		RECT rect;
-		if(GetWindowRect(hwnd, &rect)) m_hitboxes.emplace_back(glm::vec2(rect.left, rect.top), glm::vec2(rect.right, rect.bottom));
+		if(GetWindowRect(hwnd, &rect))
+			m_hitboxes.emplace_back(BoundingBox{ glm::vec2(rect.left, rect.top), glm::vec2(rect.right, rect.bottom) }, IsZoomed(hwnd));
 	}
 
 #ifdef _DEBUG
-	for(const auto& box : m_hitboxes) GraphicsContext::getInstance().getDebugRenderer().box(box, glm::vec4(0.0f, 1.0f, 0.0f, 0.3f));
+	for(const auto& box : m_hitboxes) GraphicsContext::getInstance().getDebugRenderer().box(box.bbox, glm::vec4(0.0f, 1.0f, 0.0f, 0.3f));
 
 	BoundingBox screen = SurfaceManager::getInstance().getVirtualScreenBounds();
 	glm::vec2 s = screen.max - screen.min;
@@ -72,11 +73,11 @@ void WindowPhysics::generateScreenBounds() {
 }
 
 bool WindowPhysics::overlaps(const BoundingBox& box) const {
-	return std::ranges::any_of(m_hitboxes, [&box](const BoundingBox& hitbox) { return ::overlaps(hitbox, box); });
+	return std::ranges::any_of(m_hitboxes, [&box](const PhysicsWindow& hitbox) { return ::overlaps(hitbox.bbox, box); });
 }
 
 bool WindowPhysics::overlaps(glm::vec2 pos) const {
-	return std::ranges::any_of(m_hitboxes, [pos](const BoundingBox& hitbox) { return ::overlaps(hitbox, pos); });
+	return std::ranges::any_of(m_hitboxes, [pos](const PhysicsWindow& hitbox) { return ::overlaps(hitbox.bbox, pos); });
 }
 
 Intersection WindowPhysics::rayCast(glm::vec2 origin, glm::vec2 direction, float maxDistance) const {
@@ -89,16 +90,16 @@ Intersection WindowPhysics::rayCast(glm::vec2 origin, glm::vec2 direction, float
 		if(edgeHit.distance != hit.distance) hit = edgeHit;
 	}
 
-	for(const auto& hitBox : m_hitboxes) {
-		if(::overlaps(hitBox, origin)) {
-			Intersection exit = ::rayCast(origin, direction, hitBox, hit.distance, RayCastExclude::Entrance);
+	for(const auto& window : m_hitboxes) {
+		if(::overlaps(window.bbox, origin)) {
+			Intersection exit = ::rayCast(origin, direction, window.bbox, hit.distance, RayCastExclude::Entrance);
 			if(exit.distance == hit.distance) break;
 
 			origin += direction * exit.distance;
 			d += exit.distance;
 			hit.distance -= exit.distance;
-		} else {
-			auto newHit = ::rayCast(origin, direction, hitBox, hit.distance, RayCastExclude::Exit);
+		} else if(!window.ignore) {
+			auto newHit = ::rayCast(origin, direction, window.bbox, hit.distance, RayCastExclude::Exit);
 			if(newHit.distance != hit.distance) hit = newHit;
 		}
 	}
@@ -120,17 +121,17 @@ Intersection WindowPhysics::boxCast(BoundingBox origin, glm::vec2 direction, flo
 		if(edgeHit.distance != hit.distance) hit = edgeHit;
 	}
 
-	for(const auto& hitBox : m_hitboxes) {
-		if(::overlaps(hitBox, origin)) {
-			Intersection exit = ::boxCast(origin, direction, hitBox, hit.distance, RayCastExclude::Entrance);
+	for(const auto& window : m_hitboxes) {
+		if(::overlaps(window.bbox, origin)) {
+			Intersection exit = ::boxCast(origin, direction, window.bbox, hit.distance, RayCastExclude::Entrance);
 			if(exit.distance == hit.distance) break;
 
 			origin.min += direction * exit.distance;
 			origin.max += direction * exit.distance;
 			d += exit.distance;
 			hit.distance -= exit.distance;
-		} else {
-			auto newHit = ::boxCast(origin, direction, hitBox, hit.distance, RayCastExclude::Exit);
+		} else if(!window.ignore) {
+			auto newHit = ::boxCast(origin, direction, window.bbox, hit.distance, RayCastExclude::Exit);
 			if(newHit.distance != hit.distance) hit = newHit;
 		}
 	}
