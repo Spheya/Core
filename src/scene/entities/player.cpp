@@ -10,8 +10,8 @@ constexpr static float speed = 500.0f;
 constexpr static float friction = 18.0f;
 constexpr static float slideFriction = 4.0f;
 constexpr static float airFriction = 4.0f;
-constexpr static float jumpHeight = 200.0f;
-constexpr static float duckJumpHeight = 400.0f;
+constexpr static float jumpHeight = 250.0f;
+constexpr static float duckJumpHeight = 500.0f;
 constexpr static float jumpDuration = 0.8f;
 constexpr static float slideJumpSpeed = 2000.0f;
 constexpr static float slideJumpHeight = 125.0f;
@@ -19,6 +19,10 @@ constexpr static float slideVelocityMult = 2.5f;
 constexpr static float slideCooldown = 0.25f;
 constexpr static float downwardsGravityMult = 1.2f;
 constexpr static float releaseGravityMult = 3.0f;
+
+constexpr static float slideBufferTime = 0.333f;
+constexpr static float jumpBuffertime = 0.333f;
+constexpr static float coyoteTime = 0.333f;
 
 constexpr static float jumpForce = 4.0f * jumpHeight / jumpDuration;
 constexpr static float gravity = 2.0f * jumpForce / jumpDuration;
@@ -31,6 +35,9 @@ Player::Player(CharacterAnimations animations, const Input* input) :
     m_duckInput(input ? input->getAction(InputId_PlayerDuck) : nullptr),
     m_velocity(0.0f),
     m_slideCooldown(0.0f),
+    m_slideBuffer(0.0f),
+    m_jumpBuffer(0.0f),
+    m_coyoteTime(0.0f),
     m_flipped(false),
     m_animator(std::move(animations)) {
 	localPhysicsBounds = { .min = glm::vec2(-10.0f, 16.0f), .max = glm::vec2(10.0f, 48.0f) };
@@ -45,21 +52,33 @@ void Player::setInput(const Input* input) {
 void Player::onUpdate(const Time& time) {
 	bool grounded = scene->boxCast(getPhysicsBounds(), glm::vec2(0.0f, 1.0f), 1.0f, ~0u, this).distance != 1.0f;
 	m_slideCooldown -= time.deltaTime();
+	m_slideBuffer -= time.deltaTime();
+	m_jumpBuffer -= time.deltaTime();
+	m_coyoteTime -= time.deltaTime();
 
 	float inputDir = m_movementInput ? m_movementInput->getValue() : 0.0f;
 	bool jump = m_jumpInput ? m_jumpInput->isDown() : false;
+	bool jumpPressed = m_jumpInput ? m_jumpInput->isPressed() : false;
 	bool duck = m_duckInput ? m_duckInput->isDown() : false;
 	bool duckPressed = m_duckInput ? m_duckInput->isPressed() : false;
 	bool slide = grounded && duck && std::abs(m_velocity.x) > 200.0f;
 
+	if(duckPressed) m_slideBuffer = slideBufferTime;
+	if(jumpPressed) m_jumpBuffer = jumpBuffertime;
+	if(grounded) m_coyoteTime = coyoteTime;
+
 	// slide boost
-	if(slide && duckPressed && m_slideCooldown <= 0.0f) {
+	if(slide && m_slideBuffer > 0.0f && m_slideCooldown <= 0.0f) {
+		m_slideBuffer = 0.0f;
 		m_velocity.x *= slideVelocityMult;
 		m_slideCooldown = slideCooldown;
 	}
 
 	// wahoo (jump)
-	if(jump && grounded) {
+	if((jump || m_jumpBuffer > 0.0f) && m_coyoteTime > 0.0f) {
+		m_jumpBuffer = 0.0f;
+		m_coyoteTime = 0.0f;
+
 		float force = jumpForce;
 		if(duck && !slide) force = duckJumpForce;
 		if(slide) {

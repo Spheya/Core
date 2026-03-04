@@ -27,6 +27,10 @@ private:
 	glm::vec2 m_velocity;
 	float m_slideCooldown;
 
+	float m_slideBuffer;
+	float m_jumpBuffer;
+	float m_coyoteTime;
+
 	bool m_flipped;
 	SpriteDrawable m_sprite;
 	CharacterAnimator m_animator;
