@@ -28,6 +28,8 @@ public:
 		m_currentSprite = m_sprites.begin() + unsigned(frame % m_sprites.size());
 	}
 
+	void sync(const Animation& other) { m_animationOffset = other.m_animationOffset; }
+
 	[[nodiscard]] const Sprite& getCurrentFrame() const { return *m_currentSprite; }
 
 public:
