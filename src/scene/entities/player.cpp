@@ -115,7 +115,7 @@ void Player::onUpdate(const Time& time) {
 		}
 
 		m_velocity.y = -force;
-		m_squisher.squish(time, 2.0f);
+		m_squisher.squish(time, 2.5f);
 	}
 
 	// select physics constants based on state
@@ -147,7 +147,7 @@ void Player::onUpdate(const Time& time) {
 	} else if(inputDir > 0.0f) {
 		m_flipped = false;
 	}
-	if(m_flipped != prevFlipped) m_squisher.squish(time);
+	if(m_flipped != prevFlipped) m_squisher.squish(time, 1.5f);
 
 	// select the correct animation for our bunny
 	if(grounded) {
