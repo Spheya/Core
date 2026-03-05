@@ -115,6 +115,7 @@ void Player::onUpdate(const Time& time) {
 		}
 
 		m_velocity.y = -force;
+		m_squisher.squish(time, 2.0f);
 	}
 
 	// select physics constants based on state
