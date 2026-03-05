@@ -16,9 +16,9 @@ void SpriteAtlas::load() {
 	};
 
 	// Load texture data
-	int w;
-	int h;
-	int components;
+	int w = 0;
+	int h = 0;
+	int components = 0;
 	unsigned char* imageData = stbi_load_from_memory(reinterpret_cast<const unsigned char*>(pngFile), sizeof(pngFile), &w, &h, &components, 4);
 
 	// Create DX11 texture
