@@ -18,7 +18,7 @@ static std::atomic_bool s_closeRequested; // NOLINT
 
 static zpack::FileLoader createFileLoader() {
 	constexpr char assets[] = {
-#embed "assets.pkg"
+#embed "embed/assets.pkg"
 	};
 	return zpack::FileLoader(assets, sizeof(assets));
 }

@@ -196,7 +196,7 @@
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
   <Target Name="PackageAssets" BeforeTargets="ClCompile">
-    <Exec Command="&quot;$(SolutionDir)external\zpack\zpack&quot; &quot;$(ProjectDir)embed&quot; &quot;$(ProjectDir)assets.pkg&quot; *.png *.cso -v -u" />
+    <Exec Command="&quot;$(SolutionDir)external\zpack\zpack&quot; &quot;$(ProjectDir)embed&quot; &quot;$(ProjectDir)embed\assets.pkg&quot; *.png *.cso -v -u" />
   </Target>
   <Target Name="GenerateTextureAtlas" BeforeTargets="PackageAssets" Inputs="@(AtlasInputs)" Outputs="$(ProjectDir)embed\atlas.png;$(ProjectDir)embed\atlas.json">
     <Exec Command="&quot;$(SolutionDir)external\atlas\atlas&quot; pack -o --short &quot;$(ProjectDir)assets&quot; &quot;$(ProjectDir)embed\atlas&quot;" />
